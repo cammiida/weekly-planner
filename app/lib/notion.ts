@@ -1,5 +1,6 @@
 import { Client, isFullPage } from "@notionhq/client";
 import {
+  calendarDateSchema,
   ingredientSchema,
   mealIngredientRelationsSchema,
   mealSchema,
@@ -22,6 +23,26 @@ export type MealIngredientQuantity = {
 const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
+
+export async function getCalendarData() {
+  const [error, res] = await catchError(
+    notion.databases.query({
+      database_id: process.env.NOTION_CALENDAR_DATABASE_ID ?? "",
+    })
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return calendarDateSchema
+    .array()
+    .parse(
+      res.results
+        .filter((result) => isFullPage(result))
+        .map((page) => page.properties)
+    );
+}
 
 export async function getMealIngredientJunctionTable() {
   const [error, res] = await catchError(

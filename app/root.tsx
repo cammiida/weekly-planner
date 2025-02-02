@@ -1,5 +1,6 @@
 import { Links, Meta, Outlet, Scripts, useLoaderData } from "@remix-run/react";
 import {
+  getCalendarData,
   getIngredients,
   getMealIngredientJunctionTable,
   getMeals,
@@ -8,6 +9,7 @@ import {
 import { groupByMeal, mergeMealsAndIngredients } from "./lib/utils";
 
 export async function loader() {
+  const calendarData = await getCalendarData();
   const mealIngredientRelations = await getMealIngredientJunctionTable();
 
   const mealIds = new Set<string>(
@@ -36,11 +38,11 @@ export async function loader() {
 
   const groupedByMeal = groupByMeal(mealIngredientsWithQuantity);
 
-  return Response.json({ groupedByMeal });
+  return Response.json({ calendarData, groupedByMeal });
 }
 
 export default function App() {
-  const res = useLoaderData<typeof loader>();
+  const { groupedByMeal, calendarData } = useLoaderData<typeof loader>();
 
   return (
     <html>
@@ -50,7 +52,13 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <p>{JSON.stringify(res, null, 2)}</p>
+        <pre>
+          <code>calendarData: {JSON.stringify(calendarData, null, 2)}</code>
+        </pre>
+        <pre>
+          <code>groupedByMeal: {JSON.stringify(groupedByMeal, null, 2)}</code>
+        </pre>
+        <br />
         <Outlet />
 
         <Scripts />
