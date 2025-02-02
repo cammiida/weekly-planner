@@ -25,7 +25,14 @@ export const mealIngredientRelationsSchema = z
       relation: z.array(z.object({ id: z.string() })),
     }),
   })
-  .array();
+
+  .transform((relation) => ({
+    id: relation.Meal.relation.at(0)?.id,
+    quantity: relation.Quantity.number,
+    unitOfMeasure: relation.Unit.select?.name ?? null,
+    mealId: relation.Meal.relation.at(0)?.id,
+    ingredientId: relation.Ingredient.relation.at(0)?.id,
+  }));
 
 export const mealSchema = z
   .object({
