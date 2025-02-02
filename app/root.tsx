@@ -1,7 +1,15 @@
-import React from "react";
-import { Links, Meta, Outlet, Scripts } from "@remix-run/react";
+import { Links, Meta, Outlet, Scripts, useLoaderData } from "@remix-run/react";
+import { getMealsDatabase } from "./lib/notion";
+
+export async function loader() {
+  const res = await getMealsDatabase();
+
+  return Response.json({ res });
+}
 
 export default function App() {
+  const res = useLoaderData<typeof loader>();
+
   return (
     <html>
       <head>
@@ -10,7 +18,7 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <h1>Hello world!</h1>
+        <p>{JSON.stringify(res, null, 2)}</p>
         <Outlet />
 
         <Scripts />
