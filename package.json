@@ -5,20 +5,23 @@
   "type": "module",
   "scripts": {
     "build": "npx remix vite:build",
-    "dev": "npx remix-serve build/server/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "remix vite:dev",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typecheck": "tsc"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@notionhq/client": "^2.2.15",
     "@remix-run/node": "^2.15.3",
     "@remix-run/react": "^2.15.3",
     "@remix-run/serve": "^2.15.3",
     "isbot": "^4.4.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.15.3",
