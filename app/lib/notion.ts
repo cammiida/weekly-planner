@@ -23,7 +23,7 @@ const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
 
-export async function getMealsDatabase() {
+export async function getMealIngredientJunctionTable() {
   const [error, res] = await catchError(
     notion.databases.query({
       database_id:
@@ -35,42 +35,16 @@ export async function getMealsDatabase() {
     throw error;
   }
 
-  const mealIngredientRelations = mealIngredientRelationsSchema
+  return mealIngredientRelationsSchema
     .array()
     .parse(
       res.results
         .filter((result) => isFullPage(result))
         .map((page) => page.properties)
     );
-
-  const mealIds = new Set<string>(
-    mealIngredientRelations
-      .map((relation) => relation.mealId)
-      .filter((id) => id != null)
-  );
-
-  const ingredientIds = new Set<string>(
-    mealIngredientRelations
-      .map((relation) => relation.ingredientId)
-      .filter((id) => id != null)
-  );
-
-  const [meals, ingredients] = await Promise.all([
-    getMeals(Array.from(mealIds)),
-    getIngredients(Array.from(ingredientIds)),
-  ]);
-
-  const mealIngredientsWithQuantity: MealIngredientQuantity[] =
-    mergeMealsAndIngredients({
-      relations: mealIngredientRelations,
-      meals,
-      ingredients,
-    });
-
-  return groupByMeal(mealIngredientsWithQuantity);
 }
 
-async function getMeals(mealIds: string[]): Promise<Meal[]> {
+export async function getMeals(mealIds: string[]): Promise<Meal[]> {
   try {
     const res = await Promise.all(
       mealIds.map((mealId) =>
@@ -87,7 +61,9 @@ async function getMeals(mealIds: string[]): Promise<Meal[]> {
   }
 }
 
-async function getIngredients(ingredientIds: string[]): Promise<Ingredient[]> {
+export async function getIngredients(
+  ingredientIds: string[]
+): Promise<Ingredient[]> {
   try {
     const res = await Promise.all(
       ingredientIds.map((ingredientId) =>

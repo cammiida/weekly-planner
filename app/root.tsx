@@ -1,10 +1,42 @@
 import { Links, Meta, Outlet, Scripts, useLoaderData } from "@remix-run/react";
-import { getMealsDatabase } from "./lib/notion";
+import {
+  getIngredients,
+  getMealIngredientJunctionTable,
+  getMeals,
+  MealIngredientQuantity,
+} from "./lib/notion";
+import { groupByMeal, mergeMealsAndIngredients } from "./lib/utils";
 
 export async function loader() {
-  const res = await getMealsDatabase();
+  const mealIngredientRelations = await getMealIngredientJunctionTable();
 
-  return Response.json({ res });
+  const mealIds = new Set<string>(
+    mealIngredientRelations
+      .map((relation) => relation.mealId)
+      .filter((id) => id != null)
+  );
+
+  const ingredientIds = new Set<string>(
+    mealIngredientRelations
+      .map((relation) => relation.ingredientId)
+      .filter((id) => id != null)
+  );
+
+  const [meals, ingredients] = await Promise.all([
+    getMeals(Array.from(mealIds)),
+    getIngredients(Array.from(ingredientIds)),
+  ]);
+
+  const mealIngredientsWithQuantity: MealIngredientQuantity[] =
+    mergeMealsAndIngredients({
+      relations: mealIngredientRelations,
+      meals,
+      ingredients,
+    });
+
+  const groupedByMeal = groupByMeal(mealIngredientsWithQuantity);
+
+  return Response.json({ groupedByMeal });
 }
 
 export default function App() {
