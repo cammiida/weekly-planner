@@ -1,17 +1,19 @@
 import { Client, isFullPage } from "@notionhq/client";
+import { z } from "zod";
 import {
   calendarDateSchema,
   ingredientSchema,
   mealIngredientRelationsSchema,
   mealSchema,
 } from "./schema";
-import { z } from "zod";
-import { catchError, groupByMeal, mergeMealsAndIngredients } from "./utils";
+import { catchError } from "./utils";
 
+export type CalendarDate = z.infer<typeof calendarDateSchema>;
 export type Relation = z.infer<typeof mealIngredientRelationsSchema>;
 export type Meal = z.infer<typeof mealSchema>;
 export type Ingredient = z.infer<typeof ingredientSchema>;
 export type MealIngredientQuantity = {
+  mealId: string | undefined;
   mealName: string;
   mealType: string;
   ingredient: string;
@@ -42,6 +44,30 @@ export async function getCalendarData() {
         .filter((result) => isFullPage(result))
         .map((page) => page.properties)
     );
+}
+
+export async function getCalendarMeals(calendarDates: CalendarDate[]) {
+  const breakfastIds = new Set(
+    calendarDates.map((date) => date.breakfastId).filter(Boolean)
+  );
+  const lunchIds = new Set(
+    calendarDates.map((date) => date.lunchId).filter(Boolean)
+  );
+  const snackIds = new Set(
+    calendarDates.map((date) => date.snackId).filter(Boolean)
+  );
+  const dinnerIds = new Set(
+    calendarDates.map((date) => date.dinnerId).filter(Boolean)
+  );
+
+  const mealIds = [
+    ...breakfastIds,
+    ...lunchIds,
+    ...snackIds,
+    ...dinnerIds,
+  ].filter((it) => it != null);
+
+  return getMeals(mealIds);
 }
 
 export async function getMealIngredientJunctionTable() {

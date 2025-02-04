@@ -1,15 +1,23 @@
 import { Links, Meta, Outlet, Scripts, useLoaderData } from "@remix-run/react";
 import {
   getCalendarData,
+  getCalendarMeals,
   getIngredients,
   getMealIngredientJunctionTable,
   getMeals,
   MealIngredientQuantity,
 } from "./lib/notion";
-import { groupByMeal, mergeMealsAndIngredients } from "./lib/utils";
+import {
+  mergeDatesAndMeals,
+  mergeDateWithMealsAndIngredients,
+  mergeMealsAndIngredients,
+} from "./lib/utils";
 
 export async function loader() {
   const calendarData = await getCalendarData();
+  const calendarMeals = await getCalendarMeals(calendarData);
+  const datesWithMeals = mergeDatesAndMeals(calendarData, calendarMeals);
+
   const mealIngredientRelations = await getMealIngredientJunctionTable();
 
   const mealIds = new Set<string>(
@@ -36,13 +44,16 @@ export async function loader() {
       ingredients,
     });
 
-  const groupedByMeal = groupByMeal(mealIngredientsWithQuantity);
+  const result = mergeDateWithMealsAndIngredients(
+    datesWithMeals,
+    mealIngredientsWithQuantity
+  );
 
-  return Response.json({ calendarData, groupedByMeal });
+  return Response.json({ result });
 }
 
 export default function App() {
-  const { groupedByMeal, calendarData } = useLoaderData<typeof loader>();
+  const result = useLoaderData<typeof loader>();
 
   return (
     <html>
@@ -53,11 +64,9 @@ export default function App() {
       </head>
       <body>
         <pre>
-          <code>calendarData: {JSON.stringify(calendarData, null, 2)}</code>
+          <code>{JSON.stringify(result, null, 2)}</code>
         </pre>
-        <pre>
-          <code>groupedByMeal: {JSON.stringify(groupedByMeal, null, 2)}</code>
-        </pre>
+        <pre></pre>
         <br />
         <Outlet />
 

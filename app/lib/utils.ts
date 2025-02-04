@@ -1,4 +1,10 @@
-import { Ingredient, Meal, MealIngredientQuantity, Relation } from "./notion";
+import {
+  CalendarDate,
+  Ingredient,
+  Meal,
+  MealIngredientQuantity,
+  Relation,
+} from "./notion";
 
 export async function catchError<T>(
   promise: Promise<T>
@@ -16,7 +22,7 @@ export function mergeMealsAndIngredients({
   relations: Relation[];
   meals: Meal[];
   ingredients: Ingredient[];
-}): MealIngredientQuantity[] {
+}) {
   return relations.map((relation) => {
     const meal = meals.find((it) => it.id === relation.mealId);
     const ingredient = ingredients.find(
@@ -24,31 +30,70 @@ export function mergeMealsAndIngredients({
     );
 
     return {
+      mealId: relation.mealId,
       mealName: meal?.name ?? "",
       mealType: meal?.type ?? "",
       ingredient: ingredient?.name ?? "",
       quantity: relation.quantity,
       unitOfMeasure: relation.unitOfMeasure,
-    };
+    } satisfies MealIngredientQuantity;
   });
 }
 
-export function groupByMeal(mealIngredients: MealIngredientQuantity[]) {
-  const groupedByMeal: Record<string, MealIngredientQuantity[]> = {};
-  for (const mealIngredient of mealIngredients) {
-    if (!mealIngredient.mealName) {
-      continue;
-    }
+export type DateWithMeals = {
+  date: string;
+  breakfast: Meal | undefined;
+  lunch: Meal | undefined;
+  snack: Meal | undefined;
+  dinner: Meal | undefined;
+};
+export function mergeDatesAndMeals(
+  calendarDates: CalendarDate[],
+  meals: Meal[]
+): DateWithMeals[] {
+  return calendarDates.map((date) => ({
+    date: date.date,
+    breakfast: meals.find((meal) => meal.id === date.breakfastId),
+    lunch: meals.find((meal) => meal.id === date.lunchId),
+    snack: meals.find((meal) => meal.id === date.snackId),
+    dinner: meals.find((meal) => meal.id === date.dinnerId),
+  }));
+}
 
-    if (Array.isArray(groupedByMeal[mealIngredient.mealName])) {
-      groupedByMeal[mealIngredient.mealName] = [
-        ...groupedByMeal[mealIngredient.mealName],
-        mealIngredient,
-      ];
-    } else {
-      groupedByMeal[mealIngredient.mealName] = [mealIngredient];
-    }
+export function mergeDateWithMealsAndIngredients(
+  dateWithMeals: DateWithMeals[],
+  mealIngredients: MealIngredientQuantity[]
+) {
+  function findIngredientByMealId(mealId: string | undefined) {
+    return mealIngredients.filter((it) => it.mealId === mealId);
   }
 
-  return groupedByMeal;
+  return dateWithMeals.map((dateWithMeal) => {
+    const meals = ["breakfast", "lunch", "snack", "dinner"] satisfies Extract<
+      keyof DateWithMeals,
+      "breakfast" | "lunch" | "snack" | "dinner"
+    >[];
+
+    const mealsWithIngredients: Record<
+      string,
+      {
+        name: string;
+        type: string;
+        ingredients: MealIngredientQuantity[];
+      }
+    > = {};
+
+    for (const meal of meals) {
+      mealsWithIngredients[meal] = {
+        name: dateWithMeal[meal]?.name ?? "",
+        type: dateWithMeal[meal]?.type ?? "",
+        ingredients: findIngredientByMealId(dateWithMeal[meal]?.id),
+      };
+    }
+
+    return {
+      ...dateWithMeal,
+      ...mealsWithIngredients,
+    };
+  });
 }
