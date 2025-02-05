@@ -26,7 +26,7 @@ const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
 
-export async function getCalendarData() {
+export async function getCalendarTableData() {
   const [error, res] = await catchError(
     notion.databases.query({
       database_id: process.env.NOTION_CALENDAR_DATABASE_ID ?? "",
@@ -44,6 +44,34 @@ export async function getCalendarData() {
         .filter((result) => isFullPage(result))
         .map((page) => page.properties)
     );
+}
+
+export async function getMealsTableData() {
+  const [error, res] = await catchError(
+    notion.databases.query({
+      database_id: process.env.NOTION_MEALS_DATABASE_ID ?? "",
+    })
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return mealSchema.array().parse(res.results);
+}
+
+export async function getIngredientsTableData() {
+  const [error, res] = await catchError(
+    notion.databases.query({
+      database_id: process.env.NOTION_INGREDIENTS_DATABASE_ID ?? "",
+    })
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return ingredientSchema.array().parse(res.results);
 }
 
 export async function getCalendarMeals(calendarDates: CalendarDate[]) {
@@ -82,13 +110,7 @@ export async function getMealIngredientJunctionTable() {
     throw error;
   }
 
-  return mealIngredientRelationsSchema
-    .array()
-    .parse(
-      res.results
-        .filter((result) => isFullPage(result))
-        .map((page) => page.properties)
-    );
+  return mealIngredientRelationsSchema.array().parse(res.results);
 }
 
 export async function getMeals(mealIds: string[]): Promise<Meal[]> {

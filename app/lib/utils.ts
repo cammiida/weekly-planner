@@ -14,7 +14,28 @@ export async function catchError<T>(
     .catch((error) => [error] as [Error]);
 }
 
-export function mergeMealsAndIngredients({
+export function mergeData({
+  dates,
+  meals,
+  ingredients,
+  mealIngredientRelations,
+}: {
+  dates: CalendarDate[];
+  meals: Meal[];
+  ingredients: Ingredient[];
+  mealIngredientRelations: Relation[];
+}) {
+  const calendarMeals = mergeDatesAndMeals(dates, meals);
+  const mealIngredients = mergeMealsAndIngredients({
+    relations: mealIngredientRelations,
+    meals,
+    ingredients,
+  });
+
+  return mergeDateWithMealsAndIngredients(calendarMeals, mealIngredients);
+}
+
+function mergeMealsAndIngredients({
   relations,
   meals,
   ingredients,
@@ -40,14 +61,14 @@ export function mergeMealsAndIngredients({
   });
 }
 
-export type DateWithMeals = {
+type DateWithMeals = {
   date: string;
   breakfast: Meal | undefined;
   lunch: Meal | undefined;
   snack: Meal | undefined;
   dinner: Meal | undefined;
 };
-export function mergeDatesAndMeals(
+function mergeDatesAndMeals(
   calendarDates: CalendarDate[],
   meals: Meal[]
 ): DateWithMeals[] {
@@ -60,7 +81,7 @@ export function mergeDatesAndMeals(
   }));
 }
 
-export function mergeDateWithMealsAndIngredients(
+function mergeDateWithMealsAndIngredients(
   dateWithMeals: DateWithMeals[],
   mealIngredients: MealIngredientQuantity[]
 ) {

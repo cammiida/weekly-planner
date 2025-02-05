@@ -1,53 +1,27 @@
 import { Links, Meta, Outlet, Scripts, useLoaderData } from "@remix-run/react";
 import {
-  getCalendarData,
-  getCalendarMeals,
-  getIngredients,
+  getCalendarTableData,
+  getIngredientsTableData,
   getMealIngredientJunctionTable,
-  getMeals,
-  MealIngredientQuantity,
+  getMealsTableData,
 } from "./lib/notion";
-import {
-  mergeDatesAndMeals,
-  mergeDateWithMealsAndIngredients,
-  mergeMealsAndIngredients,
-} from "./lib/utils";
+import { mergeData } from "./lib/utils";
 
 export async function loader() {
-  const calendarData = await getCalendarData();
-  const calendarMeals = await getCalendarMeals(calendarData);
-  const datesWithMeals = mergeDatesAndMeals(calendarData, calendarMeals);
+  const [dates, meals, ingredients, mealIngredientRelations] =
+    await Promise.all([
+      getCalendarTableData(),
+      getMealsTableData(),
+      getIngredientsTableData(),
+      getMealIngredientJunctionTable(),
+    ]);
 
-  const mealIngredientRelations = await getMealIngredientJunctionTable();
-
-  const mealIds = new Set<string>(
-    mealIngredientRelations
-      .map((relation) => relation.mealId)
-      .filter((id) => id != null)
-  );
-
-  const ingredientIds = new Set<string>(
-    mealIngredientRelations
-      .map((relation) => relation.ingredientId)
-      .filter((id) => id != null)
-  );
-
-  const [meals, ingredients] = await Promise.all([
-    getMeals(Array.from(mealIds)),
-    getIngredients(Array.from(ingredientIds)),
-  ]);
-
-  const mealIngredientsWithQuantity: MealIngredientQuantity[] =
-    mergeMealsAndIngredients({
-      relations: mealIngredientRelations,
-      meals,
-      ingredients,
-    });
-
-  const result = mergeDateWithMealsAndIngredients(
-    datesWithMeals,
-    mealIngredientsWithQuantity
-  );
+  const result = mergeData({
+    dates,
+    meals,
+    ingredients,
+    mealIngredientRelations,
+  });
 
   return Response.json({ result });
 }
