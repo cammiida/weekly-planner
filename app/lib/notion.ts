@@ -67,6 +67,7 @@ export async function getCalendarTableData({
     notion.databases.query({
       database_id: process.env.NOTION_CALENDAR_DATABASE_ID ?? "",
       filter: dateFilter,
+      sorts: [{ property: "Date", direction: "ascending" }],
     })
   );
 
