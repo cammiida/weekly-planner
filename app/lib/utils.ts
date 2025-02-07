@@ -99,7 +99,13 @@ function getMealIngredients(
 
   return {
     ...meal,
-    ingredients: ingredients.filter((it) => it.mealId === meal.id),
+    ingredients: ingredients
+      .filter((it) => it.mealId === meal.id)
+      .map((it) => ({
+        ingredient: it.ingredient,
+        quantity: it.quantity,
+        unitOfMeasure: it.unitOfMeasure,
+      })),
   };
 }
 
