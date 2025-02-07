@@ -116,8 +116,8 @@ function mergeDateWithMealsAndIngredients(
   return dateWithMeals.map((dateWithMeal) => ({
     ...dateWithMeal,
     breakfast: getMealIngredients(dateWithMeal.breakfast, mealIngredients),
-    lunch: getMealIngredients(dateWithMeal.breakfast, mealIngredients),
-    snack: getMealIngredients(dateWithMeal.breakfast, mealIngredients),
-    dinner: getMealIngredients(dateWithMeal.breakfast, mealIngredients),
+    lunch: getMealIngredients(dateWithMeal.lunch, mealIngredients),
+    snack: getMealIngredients(dateWithMeal.snack, mealIngredients),
+    dinner: getMealIngredients(dateWithMeal.dinner, mealIngredients),
   }));
 }
