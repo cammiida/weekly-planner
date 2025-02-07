@@ -16,10 +16,11 @@ export type Relation = z.infer<typeof mealIngredientRelationsSchema>;
 export type Meal = z.infer<typeof mealSchema>;
 export type Ingredient = z.infer<typeof ingredientSchema>;
 export type MealIngredientQuantity = {
-  mealId: string | undefined;
-  mealName: string;
-  mealType: string;
-  ingredient: string;
+  mealId: string | null;
+  mealName: string | null;
+  mealType: string | null;
+  ingredientId: string | null;
+  ingredient: string | null;
   quantity: number | null;
   unitOfMeasure: string | null;
 };

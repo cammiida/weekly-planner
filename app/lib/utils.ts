@@ -51,10 +51,11 @@ function mergeMealsAndIngredients({
     );
 
     return {
-      mealId: relation.mealId,
-      mealName: meal?.name ?? "",
-      mealType: meal?.type ?? "",
-      ingredient: ingredient?.name ?? "",
+      mealId: relation.mealId ?? null,
+      mealName: meal?.name ?? null,
+      mealType: meal?.type ?? null,
+      ingredientId: relation.ingredientId ?? null,
+      ingredient: ingredient?.name ?? null,
       quantity: relation.quantity,
       unitOfMeasure: relation.unitOfMeasure,
     };
@@ -69,13 +70,11 @@ function findMealByMealId(
 
   return meals.find((it) => it.id && it.id === mealId) ?? null;
 }
+type MealName = "breakfast" | "lunch" | "snack" | "dinner";
 
 type DateWithMeals = {
   date: string;
-  breakfast: Meal | null;
-  lunch: Meal | null;
-  snack: Meal | null;
-  dinner: Meal | null;
+  meals: Record<MealName, Meal | null>;
 };
 
 function mergeDatesAndMeals(
@@ -84,10 +83,12 @@ function mergeDatesAndMeals(
 ): DateWithMeals[] {
   return calendarDates.map((date) => ({
     date: date.date,
-    breakfast: findMealByMealId(date.breakfastId, meals),
-    lunch: findMealByMealId(date.lunchId, meals),
-    snack: findMealByMealId(date.snackId, meals),
-    dinner: findMealByMealId(date.dinnerId, meals),
+    meals: {
+      breakfast: findMealByMealId(date.breakfastId, meals),
+      lunch: findMealByMealId(date.lunchId, meals),
+      snack: findMealByMealId(date.snackId, meals),
+      dinner: findMealByMealId(date.dinnerId, meals),
+    },
   }));
 }
 
@@ -102,6 +103,7 @@ function getMealIngredients(
     ingredients: ingredients
       .filter((it) => it.mealId === meal.id)
       .map((it) => ({
+        id: it.ingredientId,
         ingredient: it.ingredient,
         quantity: it.quantity,
         unitOfMeasure: it.unitOfMeasure,
@@ -114,10 +116,15 @@ function mergeDateWithMealsAndIngredients(
   mealIngredients: MealIngredientQuantity[]
 ) {
   return dateWithMeals.map((dateWithMeal) => ({
-    ...dateWithMeal,
-    breakfast: getMealIngredients(dateWithMeal.breakfast, mealIngredients),
-    lunch: getMealIngredients(dateWithMeal.lunch, mealIngredients),
-    snack: getMealIngredients(dateWithMeal.snack, mealIngredients),
-    dinner: getMealIngredients(dateWithMeal.dinner, mealIngredients),
+    date: dateWithMeal.date,
+    meals: {
+      breakfast: getMealIngredients(
+        dateWithMeal.meals.breakfast,
+        mealIngredients
+      ),
+      lunch: getMealIngredients(dateWithMeal.meals.lunch, mealIngredients),
+      snack: getMealIngredients(dateWithMeal.meals.snack, mealIngredients),
+      dinner: getMealIngredients(dateWithMeal.meals.dinner, mealIngredients),
+    },
   }));
 }
