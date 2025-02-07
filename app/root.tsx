@@ -1,4 +1,6 @@
+import { LoaderFunction } from "@remix-run/node";
 import { Links, Meta, Outlet, Scripts, useLoaderData } from "@remix-run/react";
+import { parse } from "date-fns";
 import {
   getCalendarTableData,
   getIngredientsTableData,
@@ -7,10 +9,19 @@ import {
 } from "./lib/notion";
 import { mergeData } from "./lib/utils";
 
-export async function loader() {
+export const loader: LoaderFunction = async ({ request }) => {
+  const queryParams = new URL(request.url).searchParams;
+  const startDate = queryParams.get("start");
+  const endDate = queryParams.get("end");
+
   const [dates, meals, ingredients, mealIngredientRelations] =
     await Promise.all([
-      getCalendarTableData(),
+      getCalendarTableData({
+        startDate: startDate
+          ? parse(startDate, "yyyy-MM-dd", new Date())
+          : undefined,
+        endDate: endDate ? parse(endDate, "yyyy-MM-dd", new Date()) : undefined,
+      }),
       getMealsTableData(),
       getIngredientsTableData(),
       getMealIngredientJunctionTable(),
@@ -24,7 +35,7 @@ export async function loader() {
   });
 
   return Response.json({ result });
-}
+};
 
 export default function App() {
   const result = useLoaderData<typeof loader>();

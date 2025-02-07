@@ -6,7 +6,10 @@ import {
   mealIngredientRelationsSchema,
   mealSchema,
 } from "./schema";
+import { format } from "date-fns";
 import { catchError } from "./utils";
+import { nb } from "date-fns/locale";
+import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoints";
 
 export type CalendarDate = z.infer<typeof calendarDateSchema>;
 export type Relation = z.infer<typeof mealIngredientRelationsSchema>;
@@ -26,10 +29,44 @@ const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
 
-export async function getCalendarTableData() {
+function formattedDate(date: Date) {
+  return format(date, "yyyy-MM-dd", { locale: nb });
+}
+
+type CalendarFilter = {
+  startDate?: Date;
+  endDate?: Date;
+};
+
+export async function getCalendarTableData({
+  startDate,
+  endDate,
+}: CalendarFilter) {
+  const dateFilter: QueryDatabaseParameters["filter"] = {
+    and: [],
+  };
+
+  if (startDate) {
+    dateFilter.and.push({
+      property: "Date",
+      date: {
+        on_or_after: formattedDate(startDate),
+      },
+    });
+  }
+  if (endDate) {
+    dateFilter.and.push({
+      property: "Date",
+      date: {
+        on_or_before: formattedDate(endDate),
+      },
+    });
+  }
+
   const [error, res] = await catchError(
     notion.databases.query({
       database_id: process.env.NOTION_CALENDAR_DATABASE_ID ?? "",
+      filter: dateFilter,
     })
   );
 
