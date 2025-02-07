@@ -44,9 +44,34 @@ export default function Home() {
     <div>
       <h1>Home</h1>
 
-      <pre>
-        <code>{JSON.stringify(result, null, 2)}</code>
-      </pre>
+      <div>
+        {result.map((date) => (
+          <div key={date.date}>
+            <h2>{date.date}</h2>
+            <ul>
+              {Object.entries(date.meals).map(([mealName, meal]) => {
+                if (!meal) {
+                  return null;
+                }
+
+                return (
+                  <li key={meal.id}>
+                    <h3>{meal.name}</h3>
+                    <ul>
+                      {meal.ingredients.map((ingredient) => (
+                        <li key={ingredient.id}>
+                          {ingredient.quantity} {ingredient.unitOfMeasure}{" "}
+                          {ingredient.ingredient}
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
