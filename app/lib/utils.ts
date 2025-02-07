@@ -43,7 +43,7 @@ function mergeMealsAndIngredients({
   relations: Relation[];
   meals: Meal[];
   ingredients: Ingredient[];
-}) {
+}): MealIngredientQuantity[] {
   return relations.map((relation) => {
     const meal = meals.find((it) => it.id === relation.mealId);
     const ingredient = ingredients.find(
@@ -57,64 +57,61 @@ function mergeMealsAndIngredients({
       ingredient: ingredient?.name ?? "",
       quantity: relation.quantity,
       unitOfMeasure: relation.unitOfMeasure,
-    } satisfies MealIngredientQuantity;
+    };
   });
+}
+
+function findMealByMealId(
+  mealId: string | undefined,
+  meals: Meal[]
+): Meal | null {
+  if (!mealId) return null;
+
+  return meals.find((it) => it.id && it.id === mealId) ?? null;
 }
 
 type DateWithMeals = {
   date: string;
-  breakfast: Meal | undefined;
-  lunch: Meal | undefined;
-  snack: Meal | undefined;
-  dinner: Meal | undefined;
+  breakfast: Meal | null;
+  lunch: Meal | null;
+  snack: Meal | null;
+  dinner: Meal | null;
 };
+
 function mergeDatesAndMeals(
   calendarDates: CalendarDate[],
   meals: Meal[]
 ): DateWithMeals[] {
   return calendarDates.map((date) => ({
     date: date.date,
-    breakfast: meals.find((meal) => meal.id === date.breakfastId),
-    lunch: meals.find((meal) => meal.id === date.lunchId),
-    snack: meals.find((meal) => meal.id === date.snackId),
-    dinner: meals.find((meal) => meal.id === date.dinnerId),
+    breakfast: findMealByMealId(date.breakfastId, meals),
+    lunch: findMealByMealId(date.lunchId, meals),
+    snack: findMealByMealId(date.snackId, meals),
+    dinner: findMealByMealId(date.dinnerId, meals),
   }));
+}
+
+function getMealIngredients(
+  meal: Meal | null,
+  ingredients: MealIngredientQuantity[]
+) {
+  if (!meal) return null;
+
+  return {
+    ...meal,
+    ingredients: ingredients.filter((it) => it.mealId === meal.id),
+  };
 }
 
 function mergeDateWithMealsAndIngredients(
   dateWithMeals: DateWithMeals[],
   mealIngredients: MealIngredientQuantity[]
 ) {
-  function findIngredientByMealId(mealId: string | undefined) {
-    return mealIngredients.filter((it) => it.mealId === mealId);
-  }
-
-  return dateWithMeals.map((dateWithMeal) => {
-    const meals = ["breakfast", "lunch", "snack", "dinner"] satisfies Extract<
-      keyof DateWithMeals,
-      "breakfast" | "lunch" | "snack" | "dinner"
-    >[];
-
-    const mealsWithIngredients: Record<
-      string,
-      {
-        name: string;
-        type: string;
-        ingredients: MealIngredientQuantity[];
-      }
-    > = {};
-
-    for (const meal of meals) {
-      mealsWithIngredients[meal] = {
-        name: dateWithMeal[meal]?.name ?? "",
-        type: dateWithMeal[meal]?.type ?? "",
-        ingredients: findIngredientByMealId(dateWithMeal[meal]?.id),
-      };
-    }
-
-    return {
-      ...dateWithMeal,
-      ...mealsWithIngredients,
-    };
-  });
+  return dateWithMeals.map((dateWithMeal) => ({
+    ...dateWithMeal,
+    breakfast: getMealIngredients(dateWithMeal.breakfast, mealIngredients),
+    lunch: getMealIngredients(dateWithMeal.breakfast, mealIngredients),
+    snack: getMealIngredients(dateWithMeal.breakfast, mealIngredients),
+    dinner: getMealIngredients(dateWithMeal.breakfast, mealIngredients),
+  }));
 }
