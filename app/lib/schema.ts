@@ -2,30 +2,34 @@ import { z } from "zod";
 
 export const calendarDateSchema = z
   .object({
-    Date: z.object({ date: z.object({ start: z.string().date() }) }),
-    Breakfast: z.object({
-      type: z.literal("relation"),
-      relation: z.array(z.object({ id: z.string() })),
-    }),
-    Lunch: z.object({
-      type: z.literal("relation"),
-      relation: z.array(z.object({ id: z.string() })),
-    }),
-    Snack: z.object({
-      type: z.literal("relation"),
-      relation: z.array(z.object({ id: z.string() })),
-    }),
-    Dinner: z.object({
-      type: z.literal("relation"),
-      relation: z.array(z.object({ id: z.string() })),
+    id: z.string(),
+    properties: z.object({
+      Date: z.object({ date: z.object({ start: z.string().date() }) }),
+      Breakfast: z.object({
+        type: z.literal("relation"),
+        relation: z.array(z.object({ id: z.string() })),
+      }),
+      Lunch: z.object({
+        type: z.literal("relation"),
+        relation: z.array(z.object({ id: z.string() })),
+      }),
+      Snack: z.object({
+        type: z.literal("relation"),
+        relation: z.array(z.object({ id: z.string() })),
+      }),
+      Dinner: z.object({
+        type: z.literal("relation"),
+        relation: z.array(z.object({ id: z.string() })),
+      }),
     }),
   })
   .transform((date) => ({
-    date: date.Date.date.start,
-    breakfastId: date.Breakfast.relation.at(0)?.id,
-    lunchId: date.Lunch.relation.at(0)?.id,
-    snackId: date.Snack.relation.at(0)?.id,
-    dinnerId: date.Dinner.relation.at(0)?.id,
+    id: date.id,
+    date: date.properties.Date.date.start,
+    breakfastId: date.properties.Breakfast.relation.at(0)?.id,
+    lunchId: date.properties.Lunch.relation.at(0)?.id,
+    snackId: date.properties.Snack.relation.at(0)?.id,
+    dinnerId: date.properties.Dinner.relation.at(0)?.id,
   }));
 
 export const mealSchema = z

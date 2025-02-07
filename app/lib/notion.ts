@@ -78,11 +78,7 @@ export async function getCalendarTableData({
 
   return calendarDateSchema
     .array()
-    .parse(
-      res.results
-        .filter((result) => isFullPage(result))
-        .map((page) => page.properties)
-    );
+    .parse(res.results.filter((result) => isFullPage(result)));
 }
 
 export async function getMealsTableData() {

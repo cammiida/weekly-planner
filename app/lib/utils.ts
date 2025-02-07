@@ -73,6 +73,7 @@ function findMealByMealId(
 type MealName = "breakfast" | "lunch" | "snack" | "dinner";
 
 type DateWithMeals = {
+  id: string;
   date: string;
   meals: Record<MealName, Meal | null>;
 };
@@ -82,6 +83,7 @@ function mergeDatesAndMeals(
   meals: Meal[]
 ): DateWithMeals[] {
   return calendarDates.map((date) => ({
+    id: date.id,
     date: date.date,
     meals: {
       breakfast: findMealByMealId(date.breakfastId, meals),
@@ -116,6 +118,7 @@ function mergeDateWithMealsAndIngredients(
   mealIngredients: MealIngredientQuantity[]
 ) {
   return dateWithMeals.map((dateWithMeal) => ({
+    id: dateWithMeal.id,
     date: dateWithMeal.date,
     meals: {
       breakfast: getMealIngredients(
