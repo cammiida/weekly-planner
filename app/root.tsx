@@ -34,7 +34,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     mealIngredientRelations,
   });
 
-  return Response.json({ result });
+  return { result };
 };
 
 export default function App() {
