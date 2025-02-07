@@ -1,4 +1,4 @@
-import { LoaderFunction } from "@remix-run/node";
+import { LoaderFunctionArgs } from "@remix-run/node";
 import { Links, Meta, Outlet, Scripts, useLoaderData } from "@remix-run/react";
 import { parse } from "date-fns";
 import {
@@ -9,7 +9,7 @@ import {
 } from "./lib/notion";
 import { mergeData } from "./lib/utils";
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const queryParams = new URL(request.url).searchParams;
   const startDate = queryParams.get("start");
   const endDate = queryParams.get("end");
