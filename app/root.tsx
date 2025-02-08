@@ -18,7 +18,7 @@ export default function App() {
         <Links />
       </head>
       <body className="bg-gray-100">
-        <div className="min-h-screen mx-auto max-w-xl">
+        <div className="min-h-screen mx-auto max-w-xl py-4">
           <Outlet />
         </div>
 

@@ -87,7 +87,7 @@ export default function Home() {
         <div>
           {Object.entries(shoppingList).map(
             ([ingredient, { amount, unitOfMeasure }]) => (
-              <div key={ingredient}>
+              <div key={ingredient} className="flex gap-2">
                 <input
                   id={ingredient}
                   type="checkbox"
@@ -107,47 +107,49 @@ export default function Home() {
         <h2 className="text-lg font-semibold">Calendar</h2>
         <div className="flex flex-col gap-4">
           {result.map((date) => (
-            <div key={date.id} className="shadow-md p-4 bg-white rounded-md">
-              <h4 className="text-md font-semibold bg-green-100 w-fit p-1 rounded-md">
+            <div key={date.id} className="flex flex-col gap-2">
+              <h4 className="text-md font-semibold bg-blue-100 border-blue-300 border-1 w-fit p-1 rounded-md">
                 {date.date}
               </h4>
-              <ul>
-                {Object.entries(date.meals).map(([key, meal]) => {
-                  return (
-                    <li key={`${date.id}-${meal?.id}`} className="list-none">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex justify-between  gap-2">
-                          <h5 className="text-md font-semibold">
-                            {pascalCase(key)}: {meal?.name}
-                          </h5>
-                          <div className="min-w-fit">
-                            <label htmlFor="servings">Servings: </label>
-                            <input
-                              name="servings"
-                              type="number"
-                              className="border-2 w-10 text-center"
-                              defaultValue={1}
-                            />
+              <div key={date.id} className="shadow-md p-4 bg-white rounded-md">
+                <ul className="flex flex-col gap-4">
+                  {Object.entries(date.meals).map(([key, meal]) => {
+                    return (
+                      <li key={`${date.id}-${meal?.id}`} className="list-none">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between gap-2">
+                            <h5 className="text-md font-semibold">
+                              {pascalCase(key)}: {meal?.name}
+                            </h5>
+                            <div className="min-w-fit">
+                              <label htmlFor="servings">Servings: </label>
+                              <input
+                                name="servings"
+                                type="number"
+                                className="border-1 rounded-sm w-10 text-center"
+                                defaultValue={1}
+                              />
+                            </div>
                           </div>
+                          {meal && (
+                            <ul>
+                              {meal.ingredients.map((ingredient) => (
+                                <li
+                                  key={`${date.date}-${meal.name}-${ingredient.ingredient}`}
+                                >
+                                  {ingredient.quantity}
+                                  {ingredient.unitOfMeasure}{" "}
+                                  {ingredient.ingredient}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
-                        {meal && (
-                          <ul>
-                            {meal.ingredients.map((ingredient) => (
-                              <li
-                                key={`${date.date}-${meal.name}-${ingredient.ingredient}`}
-                              >
-                                {ingredient.quantity}
-                                {ingredient.unitOfMeasure}{" "}
-                                {ingredient.ingredient}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             </div>
           ))}
         </div>
