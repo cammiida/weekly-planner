@@ -17,8 +17,10 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body>
-        <Outlet />
+      <body className="bg-gray-100">
+        <div className="min-h-screen mx-auto max-w-xl">
+          <Outlet />
+        </div>
 
         <Scripts />
       </body>
