@@ -2,6 +2,7 @@ import { LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { parse } from "date-fns";
 import { CalendarDateComponent } from "~/components/CalendarDate";
+import { ShoppingList } from "~/components/ShoppingList";
 import {
   getCalendarTableData,
   getIngredientsTableData,
@@ -38,72 +39,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return result;
 }
 
-function getShoppingList(result: Awaited<ReturnType<typeof loader>>) {
-  const ingredientsWithQuantity: Record<
-    string,
-    { amount: number; unitOfMeasure: string | null }
-  > = {};
-
-  result.forEach((date) => {
-    return Object.values(date.meals).forEach((meal) => {
-      if (!meal) {
-        return [];
-      }
-
-      for (const ingredient of meal.ingredients) {
-        const key = ingredient.ingredient;
-        if (!key) {
-          continue;
-        }
-
-        if (ingredientsWithQuantity[key]) {
-          ingredientsWithQuantity[key].amount += ingredient.quantity ?? 0;
-          ingredientsWithQuantity[key].unitOfMeasure =
-            ingredient.unitOfMeasure ??
-            ingredientsWithQuantity[key].unitOfMeasure;
-        } else {
-          ingredientsWithQuantity[key] = {
-            amount: ingredient.quantity ?? 0,
-            unitOfMeasure: ingredient.unitOfMeasure ?? null,
-          };
-        }
-      }
-    });
-  });
-
-  return ingredientsWithQuantity;
-}
-
 export default function Home() {
   const result = useLoaderData<typeof loader>();
-
-  const shoppingList = getShoppingList(result);
 
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold">Home</h1>
 
-      <div className="shadow-md p-4 bg-white rounded-md">
-        <h2 className="text-lg font-semibold">Shopping List</h2>
-        <div>
-          {Object.entries(shoppingList).map(
-            ([ingredient, { amount, unitOfMeasure }]) => (
-              <div key={ingredient} className="flex gap-2">
-                <input
-                  id={ingredient}
-                  type="checkbox"
-                  key={ingredient}
-                  value={`${ingredient} ${amount}${unitOfMeasure}`}
-                />
-                <label htmlFor={ingredient}>
-                  {ingredient} {amount} {unitOfMeasure}
-                </label>
-              </div>
-            )
-          )}
-        </div>
-      </div>
-
+      <ShoppingList calendarData={result} />
       <div>
         <h2 className="text-lg font-semibold">Calendar</h2>
         <div className="flex flex-col gap-4">
