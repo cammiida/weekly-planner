@@ -1,18 +1,10 @@
 import {
   CalendarDate,
   Ingredient,
-  Meal,
-  MealIngredientQuantity,
+  Meal as Recipe,
+  MealIngredientQuantity as RecipeIngredient,
   Relation,
 } from "./notion";
-
-export async function catchError<T>(
-  promise: Promise<T>
-): Promise<[Error] | [undefined, T]> {
-  return promise
-    .then((data) => [undefined, data] as [undefined, T])
-    .catch((error) => [error] as [Error]);
-}
 
 export function mergeData({
   dates,
@@ -21,7 +13,7 @@ export function mergeData({
   mealIngredientRelations,
 }: {
   dates: CalendarDate[];
-  meals: Meal[];
+  meals: Recipe[];
   ingredients: Ingredient[];
   mealIngredientRelations: Relation[];
 }) {
@@ -41,9 +33,9 @@ function mergeMealsAndIngredients({
   ingredients,
 }: {
   relations: Relation[];
-  meals: Meal[];
+  meals: Recipe[];
   ingredients: Ingredient[];
-}): MealIngredientQuantity[] {
+}): RecipeIngredient[] {
   return relations.map((relation) => {
     const meal = meals.find((it) => it.id === relation.mealId);
     const ingredient = ingredients.find(
@@ -62,41 +54,41 @@ function mergeMealsAndIngredients({
   });
 }
 
-function findMealByMealId(
-  mealId: string | undefined,
-  meals: Meal[]
-): Meal | null {
-  if (!mealId) return null;
+function findRecipeById(
+  id: string | undefined,
+  recipes: Recipe[]
+): Recipe | null {
+  if (!id) return null;
 
-  return meals.find((it) => it.id && it.id === mealId) ?? null;
+  return recipes.find((it) => it.id && it.id === id) ?? null;
 }
-type MealName = "breakfast" | "lunch" | "snack" | "dinner";
+type Meal = "breakfast" | "lunch" | "snack" | "dinner";
 
-type DateWithMeals = {
+type DateWithMealsAndRecipes = {
   id: string;
   date: string;
-  meals: Record<MealName, Meal | null>;
+  meals: Record<Meal, Recipe | null>;
 };
 
 function mergeDatesAndMeals(
   calendarDates: CalendarDate[],
-  meals: Meal[]
-): DateWithMeals[] {
+  meals: Recipe[]
+): DateWithMealsAndRecipes[] {
   return calendarDates.map((date) => ({
     id: date.id,
     date: date.date,
     meals: {
-      breakfast: findMealByMealId(date.breakfastId, meals),
-      lunch: findMealByMealId(date.lunchId, meals),
-      snack: findMealByMealId(date.snackId, meals),
-      dinner: findMealByMealId(date.dinnerId, meals),
+      breakfast: findRecipeById(date.breakfastId, meals),
+      lunch: findRecipeById(date.lunchId, meals),
+      snack: findRecipeById(date.snackId, meals),
+      dinner: findRecipeById(date.dinnerId, meals),
     },
   }));
 }
 
-function getMealIngredients(
-  meal: Meal | null,
-  ingredients: MealIngredientQuantity[]
+function getRecipeIngredients(
+  meal: Recipe | null,
+  ingredients: RecipeIngredient[]
 ) {
   if (!meal) return null;
 
@@ -113,21 +105,47 @@ function getMealIngredients(
   };
 }
 
+export type DateWithMealsRecipesAndIngredients = {
+  id: string;
+  date: string;
+  meals: Record<Meal, ReturnType<typeof getRecipeIngredients> | null>;
+};
+
 function mergeDateWithMealsAndIngredients(
-  dateWithMeals: DateWithMeals[],
-  mealIngredients: MealIngredientQuantity[]
+  dateWithMeals: DateWithMealsAndRecipes[],
+  mealIngredients: RecipeIngredient[]
 ) {
-  return dateWithMeals.map((dateWithMeal) => ({
-    id: dateWithMeal.id,
-    date: dateWithMeal.date,
-    meals: {
-      breakfast: getMealIngredients(
-        dateWithMeal.meals.breakfast,
-        mealIngredients
-      ),
-      lunch: getMealIngredients(dateWithMeal.meals.lunch, mealIngredients),
-      snack: getMealIngredients(dateWithMeal.meals.snack, mealIngredients),
-      dinner: getMealIngredients(dateWithMeal.meals.dinner, mealIngredients),
-    },
-  }));
+  return dateWithMeals.map(
+    (dateWithMeal) =>
+      ({
+        id: dateWithMeal.id,
+        date: dateWithMeal.date,
+        meals: {
+          breakfast: getRecipeIngredients(
+            dateWithMeal.meals.breakfast,
+            mealIngredients
+          ),
+          lunch: getRecipeIngredients(
+            dateWithMeal.meals.lunch,
+            mealIngredients
+          ),
+          snack: getRecipeIngredients(
+            dateWithMeal.meals.snack,
+            mealIngredients
+          ),
+          dinner: getRecipeIngredients(
+            dateWithMeal.meals.dinner,
+            mealIngredients
+          ),
+        },
+      } satisfies DateWithMealsRecipesAndIngredients)
+  );
+}
+
+export async function catchError<T>(
+  promise: Promise<T>
+): Promise<[Error] | [undefined, T]> {
+  return promise
+    .then((data) => [undefined, data] as [undefined, T])
+    .catch((error) => [error] as [Error]);
 }
