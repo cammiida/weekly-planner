@@ -45,21 +45,25 @@ function getShoppingList(result: Awaited<ReturnType<typeof indexLoader>>) {
       }
 
       for (const ingredient of meal.ingredients) {
-        const key = ingredient.ingredient;
-        if (!key) {
+        const ingredientName = ingredient.ingredient;
+        if (!ingredientName) {
           continue;
         }
 
-        if (ingredientsWithQuantity[key]) {
-          ingredientsWithQuantity[key].amount += ingredient.quantity ?? 0;
-          ingredientsWithQuantity[key].unitOfMeasure =
-            ingredient.unitOfMeasure ??
-            ingredientsWithQuantity[key].unitOfMeasure;
-        } else {
-          ingredientsWithQuantity[key] = {
-            amount: ingredient.quantity ?? 0,
-            unitOfMeasure: ingredient.unitOfMeasure ?? null,
+        if (!ingredientsWithQuantity[ingredientName]) {
+          ingredientsWithQuantity[ingredientName] = {
+            amount: 0,
+            unitOfMeasure: null,
           };
+        }
+
+        const quantity = ingredient.quantity ?? 0;
+        const servings = meal.servings ?? 1;
+        ingredientsWithQuantity[ingredientName].amount += quantity * servings;
+
+        if (ingredient.unitOfMeasure) {
+          ingredientsWithQuantity[ingredientName].unitOfMeasure =
+            ingredient.unitOfMeasure;
         }
       }
     });

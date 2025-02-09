@@ -16,7 +16,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const startDate = queryParams.get("start");
   const endDate = queryParams.get("end");
 
-  const [dates, meals, ingredients, mealIngredientRelations] =
+  const [dates, recipes, ingredients, mealIngredientRelations] =
     await Promise.all([
       getCalendarTableData({
         startDate: startDate
@@ -31,7 +31,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const result = mergeData({
     dates,
-    meals,
+    recipes,
     ingredients,
     mealIngredientRelations,
   });

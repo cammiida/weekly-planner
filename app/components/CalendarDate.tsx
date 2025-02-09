@@ -1,7 +1,7 @@
 import React from "react";
-import { DateWithMealsRecipesAndIngredients } from "~/lib/utils";
+import { loader } from "~/routes/_index";
 
-type CalendarDateProps = { date: DateWithMealsRecipesAndIngredients };
+type CalendarDateProps = { date: Awaited<ReturnType<typeof loader>>[0] };
 
 export const CalendarDateComponent: React.FC<CalendarDateProps> = ({
   date,
@@ -19,7 +19,7 @@ export const CalendarDateComponent: React.FC<CalendarDateProps> = ({
                 <div className="flex flex-col gap-2">
                   <div className="flex justify-between gap-2">
                     <h5 className="text-md font-semibold">
-                      {pascalCase(key)}: {meal?.name}
+                      {pascalCase(key)}: {meal.name}
                     </h5>
                     <div className="min-w-fit">
                       <label htmlFor="servings">Servings: </label>
@@ -27,22 +27,20 @@ export const CalendarDateComponent: React.FC<CalendarDateProps> = ({
                         name="servings"
                         type="number"
                         className="border-1 rounded-sm w-10 text-center"
-                        defaultValue={1}
+                        value={meal.servings}
                       />
                     </div>
                   </div>
-                  {meal && (
-                    <ul>
-                      {meal.ingredients.map((ingredient) => (
-                        <li
-                          key={`${date.date}-${meal.name}-${ingredient.ingredient}`}
-                        >
-                          {ingredient.quantity}
-                          {ingredient.unitOfMeasure} {ingredient.ingredient}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <ul>
+                    {meal.ingredients.map((ingredient) => (
+                      <li
+                        key={`${date.date}-${meal.name}-${ingredient.ingredient}`}
+                      >
+                        {ingredient.quantity}
+                        {ingredient.unitOfMeasure} {ingredient.ingredient}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </li>
             );

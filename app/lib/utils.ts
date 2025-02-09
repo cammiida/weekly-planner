@@ -9,26 +9,30 @@ import { Meal } from "./schema";
 
 export function mergeData({
   dates,
-  meals,
+  recipes,
   ingredients,
   mealIngredientRelations,
 }: {
   dates: CalendarDate[];
-  meals: Recipe[];
+  recipes: Recipe[];
   ingredients: Ingredient[];
   mealIngredientRelations: Relation[];
 }) {
-  const calendarMeals = mergeDatesAndMeals(dates, meals);
-  const mealIngredients = mergeMealsAndIngredients({
+  const recipesWithIngredients = mergeRecipeAndIngredients({
     relations: mealIngredientRelations,
-    recipes: meals,
+    recipes,
     ingredients,
   });
 
-  return mergeDateWithMealsAndIngredients(calendarMeals, mealIngredients);
+  const calendarMeals = mergeDatesAndMeals(dates, recipes);
+
+  return mergeDateWithMealsAndIngredients(
+    calendarMeals,
+    recipesWithIngredients
+  );
 }
 
-function mergeMealsAndIngredients({
+function mergeRecipeAndIngredients({
   relations,
   recipes,
   ingredients,
@@ -67,7 +71,7 @@ function findRecipeById(
 type DateWithMealsAndRecipes = {
   id: string;
   date: string;
-  meals: Record<Meal, Recipe | null>;
+  meals: Record<Meal, (Recipe & { servings: number }) | null>;
 };
 
 function mergeDatesAndMeals(
@@ -78,6 +82,7 @@ function mergeDatesAndMeals(
     id: date.id,
     date: date.date,
     recipe: findRecipeById(date.recipeId, meals),
+    servings: date.servings,
     meal: date.meal,
   }));
 
@@ -98,7 +103,9 @@ function mergeDatesAndMeals(
     }
 
     if (date.meal) {
-      dates[date.date].meals[date.meal] = date.recipe;
+      dates[date.date].meals[date.meal] = date.recipe
+        ? { ...date.recipe, servings: date.servings }
+        : null;
     }
   }
 
@@ -106,22 +113,19 @@ function mergeDatesAndMeals(
 }
 
 function getRecipeIngredients(
-  meal: Recipe | null,
+  recipeId: string | undefined,
   ingredients: RecipeIngredient[]
 ) {
-  if (!meal) return null;
-
-  return {
-    ...meal,
-    ingredients: ingredients
-      .filter((it) => it.recipeId === meal.id)
-      .map((it) => ({
-        id: it.ingredientId,
-        ingredient: it.ingredient,
-        quantity: it.quantity,
-        unitOfMeasure: it.unitOfMeasure,
-      })),
-  };
+  return recipeId
+    ? ingredients
+        .filter((it) => it.recipeId === recipeId)
+        .map((it) => ({
+          id: it.ingredientId,
+          ingredient: it.ingredient,
+          quantity: it.quantity,
+          unitOfMeasure: it.unitOfMeasure,
+        }))
+    : [];
 }
 
 export type DateWithMealsRecipesAndIngredients = {
@@ -134,31 +138,40 @@ function mergeDateWithMealsAndIngredients(
   dateWithMeals: DateWithMealsAndRecipes[],
   mealIngredients: RecipeIngredient[]
 ) {
-  return dateWithMeals.map(
-    (dateWithMeal) =>
-      ({
-        id: dateWithMeal.id,
-        date: dateWithMeal.date,
-        meals: {
-          breakfast: getRecipeIngredients(
-            dateWithMeal.meals.breakfast,
-            mealIngredients
-          ),
-          lunch: getRecipeIngredients(
-            dateWithMeal.meals.lunch,
-            mealIngredients
-          ),
-          snack: getRecipeIngredients(
-            dateWithMeal.meals.snack,
-            mealIngredients
-          ),
-          dinner: getRecipeIngredients(
-            dateWithMeal.meals.dinner,
-            mealIngredients
-          ),
-        },
-      } satisfies DateWithMealsRecipesAndIngredients)
-  );
+  return dateWithMeals.map((dateWithMeal) => ({
+    id: dateWithMeal.id,
+    date: dateWithMeal.date,
+    meals: {
+      breakfast: {
+        ...dateWithMeal.meals.breakfast,
+        ingredients: getRecipeIngredients(
+          dateWithMeal.meals.breakfast?.id,
+          mealIngredients
+        ),
+      },
+      lunch: {
+        ...dateWithMeal.meals.lunch,
+        ingredients: getRecipeIngredients(
+          dateWithMeal.meals.lunch?.id,
+          mealIngredients
+        ),
+      },
+      snack: {
+        ...dateWithMeal.meals.snack,
+        ingredients: getRecipeIngredients(
+          dateWithMeal.meals.snack?.id,
+          mealIngredients
+        ),
+      },
+      dinner: {
+        ...dateWithMeal.meals.dinner,
+        ingredients: getRecipeIngredients(
+          dateWithMeal.meals.dinner?.id,
+          mealIngredients
+        ),
+      },
+    },
+  }));
 }
 
 export async function catchError<T>(
