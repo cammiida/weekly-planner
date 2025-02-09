@@ -1,10 +1,11 @@
 import {
   CalendarDate,
   Ingredient,
-  Meal as Recipe,
-  MealIngredientQuantity as RecipeIngredient,
+  Recipe,
+  RecipeIngredientQuantity as RecipeIngredient,
   Relation,
 } from "./notion";
+import { Meal } from "./schema";
 
 export function mergeData({
   dates,
@@ -20,7 +21,7 @@ export function mergeData({
   const calendarMeals = mergeDatesAndMeals(dates, meals);
   const mealIngredients = mergeMealsAndIngredients({
     relations: mealIngredientRelations,
-    meals,
+    recipes: meals,
     ingredients,
   });
 
@@ -29,28 +30,28 @@ export function mergeData({
 
 function mergeMealsAndIngredients({
   relations,
-  meals,
+  recipes,
   ingredients,
 }: {
   relations: Relation[];
-  meals: Recipe[];
+  recipes: Recipe[];
   ingredients: Ingredient[];
 }): RecipeIngredient[] {
   return relations.map((relation) => {
-    const meal = meals.find((it) => it.id === relation.mealId);
+    const recipe = recipes.find((it) => it.id === relation.recipeId);
     const ingredient = ingredients.find(
       (it) => it.id === relation.ingredientId
     );
 
     return {
-      mealId: relation.mealId ?? null,
-      mealName: meal?.name ?? null,
-      mealType: meal?.type ?? null,
+      recipeId: relation.recipeId ?? null,
+      name: recipe?.name ?? null,
+      meal: recipe?.type ?? null,
       ingredientId: relation.ingredientId ?? null,
       ingredient: ingredient?.name ?? null,
       quantity: relation.quantity,
       unitOfMeasure: relation.unitOfMeasure,
-    };
+    } satisfies RecipeIngredient;
   });
 }
 
@@ -62,7 +63,6 @@ function findRecipeById(
 
   return recipes.find((it) => it.id && it.id === id) ?? null;
 }
-type Meal = "breakfast" | "lunch" | "snack" | "dinner";
 
 type DateWithMealsAndRecipes = {
   id: string;
@@ -74,16 +74,35 @@ function mergeDatesAndMeals(
   calendarDates: CalendarDate[],
   meals: Recipe[]
 ): DateWithMealsAndRecipes[] {
-  return calendarDates.map((date) => ({
+  const datesWithRecipes = calendarDates.map((date) => ({
     id: date.id,
     date: date.date,
-    meals: {
-      breakfast: findRecipeById(date.breakfastId, meals),
-      lunch: findRecipeById(date.lunchId, meals),
-      snack: findRecipeById(date.snackId, meals),
-      dinner: findRecipeById(date.dinnerId, meals),
-    },
+    recipe: findRecipeById(date.recipeId, meals),
+    meal: date.meal,
   }));
+
+  const dates: Record<string, DateWithMealsAndRecipes> = {};
+
+  for (const date of datesWithRecipes) {
+    if (!dates[date.date]) {
+      dates[date.date] = {
+        id: date.id,
+        date: date.date,
+        meals: {
+          breakfast: null,
+          lunch: null,
+          snack: null,
+          dinner: null,
+        },
+      };
+    }
+
+    if (date.meal) {
+      dates[date.date].meals[date.meal] = date.recipe;
+    }
+  }
+
+  return Object.values(dates);
 }
 
 function getRecipeIngredients(
@@ -95,7 +114,7 @@ function getRecipeIngredients(
   return {
     ...meal,
     ingredients: ingredients
-      .filter((it) => it.mealId === meal.id)
+      .filter((it) => it.recipeId === meal.id)
       .map((it) => ({
         id: it.ingredientId,
         ingredient: it.ingredient,

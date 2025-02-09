@@ -1,42 +1,63 @@
 import { z } from "zod";
 
+export type Meal = "breakfast" | "lunch" | "dinner" | "snack";
+type MealNorwegian = "Frokost" | "Lunsj" | "Middag" | "Snack";
+const mealMapping = {
+  Frokost: "breakfast",
+  Lunsj: "lunch",
+  Middag: "dinner",
+  Snack: "snack",
+} as const satisfies Record<MealNorwegian, Meal>;
+
+function toMeal(meal: MealNorwegian | undefined): Meal | null {
+  return meal ? mealMapping[meal] : null;
+}
+
+const mealSelect = z.enum([
+  "Frokost",
+  "Lunsj",
+  "Middag",
+  "Snack",
+] as const satisfies MealNorwegian[]);
+
 export const calendarDateSchema = z
   .object({
     id: z.string(),
     properties: z.object({
       Date: z.object({ date: z.object({ start: z.string().date() }) }),
-      Breakfast: z.object({
+      Meal: z.object({
+        type: z.literal("rollup"),
+        rollup: z.object({
+          array: z.array(
+            z.object({
+              type: z.literal("select"),
+              select: z.object({
+                name: mealSelect,
+              }),
+            })
+          ),
+        }),
+      }),
+      Recipe: z.object({
         type: z.literal("relation"),
         relation: z.array(z.object({ id: z.string() })),
       }),
-      Lunch: z.object({
-        type: z.literal("relation"),
-        relation: z.array(z.object({ id: z.string() })),
-      }),
-      Snack: z.object({
-        type: z.literal("relation"),
-        relation: z.array(z.object({ id: z.string() })),
-      }),
-      Dinner: z.object({
-        type: z.literal("relation"),
-        relation: z.array(z.object({ id: z.string() })),
-      }),
+      Servings: z.object({ number: z.number().nullable() }).optional(),
     }),
   })
   .transform((date) => ({
     id: date.id,
     date: date.properties.Date.date.start,
-    breakfastId: date.properties.Breakfast.relation.at(0)?.id,
-    lunchId: date.properties.Lunch.relation.at(0)?.id,
-    snackId: date.properties.Snack.relation.at(0)?.id,
-    dinnerId: date.properties.Dinner.relation.at(0)?.id,
+    meal: toMeal(date.properties.Meal.rollup.array.at(0)?.select.name),
+    recipeId: date.properties.Recipe.relation.at(0)?.id,
+    servings: date.properties.Servings?.number ?? 1,
   }));
 
 export const mealSchema = z
   .object({
     id: z.string(),
     properties: z.object({
-      Type: z.object({ select: z.object({ name: z.string() }).nullable() }),
+      Type: z.object({ select: z.object({ name: mealSelect }).nullable() }),
       Name: z.object({
         title: z.array(z.object({ plain_text: z.string() })),
       }),
@@ -45,7 +66,7 @@ export const mealSchema = z
   .transform((meal) => ({
     id: meal.id,
     name: meal.properties.Name.title[0].plain_text,
-    type: meal.properties.Type.select?.name ?? null,
+    type: toMeal(meal.properties.Type.select?.name),
   }));
 
 export const ingredientSchema = z
@@ -94,6 +115,6 @@ export const mealIngredientRelationsSchema = z
     id: relation.id,
     quantity: relation.properties.Quantity.number,
     unitOfMeasure: relation.properties.Unit.select?.name ?? null,
-    mealId: relation.properties.Meal.relation.at(0)?.id,
+    recipeId: relation.properties.Meal.relation.at(0)?.id,
     ingredientId: relation.properties.Ingredient.relation.at(0)?.id,
   }));

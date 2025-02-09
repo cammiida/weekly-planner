@@ -3,8 +3,9 @@ import { z } from "zod";
 import {
   calendarDateSchema,
   ingredientSchema,
+  Meal,
   mealIngredientRelationsSchema,
-  mealSchema,
+  mealSchema as recipeSchema,
 } from "./schema";
 import { format } from "date-fns";
 import { catchError } from "./utils";
@@ -13,12 +14,12 @@ import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoint
 
 export type CalendarDate = z.infer<typeof calendarDateSchema>;
 export type Relation = z.infer<typeof mealIngredientRelationsSchema>;
-export type Meal = z.infer<typeof mealSchema>;
+export type Recipe = z.infer<typeof recipeSchema>;
 export type Ingredient = z.infer<typeof ingredientSchema>;
-export type MealIngredientQuantity = {
-  mealId: string | null;
-  mealName: string | null;
-  mealType: string | null;
+export type RecipeIngredientQuantity = {
+  recipeId: string | null;
+  name: string | null;
+  meal: Meal | null;
   ingredientId: string | null;
   ingredient: string | null;
   quantity: number | null;
@@ -66,7 +67,7 @@ export async function getCalendarTableData({
 
   const [error, res] = await catchError(
     notion.databases.query({
-      database_id: process.env.NOTION_CALENDAR_DATABASE_ID ?? "",
+      database_id: process.env.NOTION_DATE_MEALS_VIEW_ID ?? "",
       filter: dateFilter,
       sorts: [{ property: "Date", direction: "ascending" }],
     })
@@ -92,7 +93,7 @@ export async function getMealsTableData() {
     throw error;
   }
 
-  return mealSchema.array().parse(res.results);
+  return recipeSchema.array().parse(res.results);
 }
 
 export async function getIngredientsTableData() {
@@ -109,28 +110,12 @@ export async function getIngredientsTableData() {
   return ingredientSchema.array().parse(res.results);
 }
 
-export async function getCalendarMeals(calendarDates: CalendarDate[]) {
-  const breakfastIds = new Set(
-    calendarDates.map((date) => date.breakfastId).filter(Boolean)
-  );
-  const lunchIds = new Set(
-    calendarDates.map((date) => date.lunchId).filter(Boolean)
-  );
-  const snackIds = new Set(
-    calendarDates.map((date) => date.snackId).filter(Boolean)
-  );
-  const dinnerIds = new Set(
-    calendarDates.map((date) => date.dinnerId).filter(Boolean)
-  );
+export async function getCalendarRecipes(calendarDates: CalendarDate[]) {
+  const recipeIds = calendarDates
+    .map((date) => date.recipeId)
+    .filter((it) => it != null);
 
-  const mealIds = [
-    ...breakfastIds,
-    ...lunchIds,
-    ...snackIds,
-    ...dinnerIds,
-  ].filter((it) => it != null);
-
-  return getMeals(mealIds);
+  return getMeals(recipeIds);
 }
 
 export async function getMealIngredientJunctionTable() {
@@ -148,7 +133,7 @@ export async function getMealIngredientJunctionTable() {
   return mealIngredientRelationsSchema.array().parse(res.results);
 }
 
-export async function getMeals(mealIds: string[]): Promise<Meal[]> {
+export async function getMeals(mealIds: string[]): Promise<Recipe[]> {
   try {
     const res = await Promise.all(
       mealIds.map((mealId) =>
@@ -158,7 +143,7 @@ export async function getMeals(mealIds: string[]): Promise<Meal[]> {
       )
     );
 
-    return mealSchema.array().parse(res);
+    return recipeSchema.array().parse(res);
   } catch (error) {
     console.log(error);
     return [];
