@@ -27,15 +27,13 @@ export const CalendarDateComponent: React.FC<CalendarDateProps> = ({
                         name="servings"
                         type="number"
                         className="border-1 rounded-sm w-10 text-center"
-                        value={meal.servings}
+                        defaultValue={meal.servings}
                       />
                     </div>
                   </div>
                   <ul>
                     {meal.ingredients.map((ingredient) => (
-                      <li
-                        key={`${date.date}-${meal.name}-${ingredient.ingredient}`}
-                      >
+                      <li key={ingredient.id}>
                         {ingredient.quantity}
                         {ingredient.unitOfMeasure} {ingredient.ingredient}
                       </li>
