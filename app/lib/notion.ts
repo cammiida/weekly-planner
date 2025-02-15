@@ -7,7 +7,7 @@ import {
   mealIngredientRelationsSchema,
   mealSchema as recipeSchema,
 } from "./schema";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { catchError } from "./utils";
 import { nb } from "date-fns/locale";
 import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoints";
@@ -31,13 +31,15 @@ const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
 
-function formattedDate(date: Date) {
-  return format(date, "yyyy-MM-dd", { locale: nb });
+function formattedDate(dateString: string) {
+  const date = parse(dateString, "dd-MM-yyyy", new Date());
+
+  return format(new Date(date), "yyyy-MM-dd", { locale: nb });
 }
 
 type CalendarFilter = {
-  startDate?: Date;
-  endDate?: Date;
+  startDate: string | null;
+  endDate: string | null;
 };
 
 export async function getCalendarTableData({

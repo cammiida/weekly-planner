@@ -19,10 +19,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const [dates, recipes, ingredients, mealIngredientRelations] =
     await Promise.all([
       getCalendarTableData({
-        startDate: startDate
-          ? parse(startDate, "yyyy-MM-dd", new Date())
-          : undefined,
-        endDate: endDate ? parse(endDate, "yyyy-MM-dd", new Date()) : undefined,
+        startDate: startDate,
+        endDate: endDate,
       }),
       getMealsTableData(),
       getIngredientsTableData(),
