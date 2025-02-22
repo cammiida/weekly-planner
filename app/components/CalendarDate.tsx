@@ -13,13 +13,13 @@ export const CalendarDateComponent: React.FC<CalendarDateProps> = ({
       </h4>
       <div key={date.id} className="shadow-md p-4 bg-white rounded-md">
         <ul className="flex flex-col gap-4">
-          {Object.entries(date.meals).map(([key, meal]) => {
+          {Object.entries(date.meals).map(([meal, recipe]) => {
             return (
-              <li key={`${date.id}-${meal?.id}`} className="list-none">
+              <li key={`${date.id}-${meal}`} className="list-none">
                 <div className="flex flex-col gap-2">
                   <div className="flex justify-between gap-2">
                     <h5 className="text-md font-semibold">
-                      {pascalCase(key)}: {meal.name}
+                      {pascalCase(meal)}: {recipe.name}
                     </h5>
                     <div className="min-w-fit">
                       <label htmlFor="servings">Servings: </label>
@@ -27,12 +27,12 @@ export const CalendarDateComponent: React.FC<CalendarDateProps> = ({
                         name="servings"
                         type="number"
                         className="border-1 rounded-sm w-10 text-center"
-                        defaultValue={meal.servings}
+                        defaultValue={recipe.servings}
                       />
                     </div>
                   </div>
                   <ul>
-                    {meal.ingredients.map((ingredient) => (
+                    {recipe.ingredients.map((ingredient) => (
                       <li key={ingredient.id}>
                         {ingredient.quantity}
                         {ingredient.unitOfMeasure} {ingredient.ingredient}
