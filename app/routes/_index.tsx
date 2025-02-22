@@ -13,15 +13,12 @@ import { mergeData } from "~/lib/utils";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const queryParams = new URL(request.url).searchParams;
-  const startDate = queryParams.get("start");
-  const endDate = queryParams.get("end");
+  const from = queryParams.get("from");
+  const to = queryParams.get("to");
 
   const [dates, recipes, ingredients, mealIngredientRelations] =
     await Promise.all([
-      getCalendarTableData({
-        startDate: startDate,
-        endDate: endDate,
-      }),
+      getCalendarTableData({ from, to }),
       getMealsTableData(),
       getIngredientsTableData(),
       getMealIngredientJunctionTable(),

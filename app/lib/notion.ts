@@ -7,7 +7,7 @@ import {
   mealIngredientRelationsSchema,
   mealSchema as recipeSchema,
 } from "./schema";
-import { format, parse } from "date-fns";
+import { format, isDate, parse } from "date-fns";
 import { catchError } from "./utils";
 import { nb } from "date-fns/locale";
 import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoints";
@@ -26,43 +26,42 @@ export type RecipeIngredientQuantity = {
   unitOfMeasure: string | null;
 };
 
+function isValidDate(dateStr: string) {
+  return !isNaN(new Date(dateStr).getTime());
+}
+
 // Initializing a client
 const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
 
 function formattedDate(dateString: string) {
-  const date = parse(dateString, "dd-MM-yyyy", new Date());
-
-  return format(new Date(date), "yyyy-MM-dd", { locale: nb });
+  return format(new Date(dateString), "yyyy-MM-dd", { locale: nb });
 }
 
 type CalendarFilter = {
-  startDate: string | null;
-  endDate: string | null;
+  from: string | null;
+  to: string | null;
 };
 
-export async function getCalendarTableData({
-  startDate,
-  endDate,
-}: CalendarFilter) {
+export async function getCalendarTableData({ from, to }: CalendarFilter) {
   const dateFilter: QueryDatabaseParameters["filter"] = {
     and: [],
   };
 
-  if (startDate) {
+  if (from && isValidDate(from)) {
     dateFilter.and.push({
       property: "Date",
       date: {
-        on_or_after: formattedDate(startDate),
+        on_or_after: formattedDate(from),
       },
     });
   }
-  if (endDate) {
+  if (to && isValidDate(to)) {
     dateFilter.and.push({
       property: "Date",
       date: {
-        on_or_before: formattedDate(endDate),
+        on_or_before: formattedDate(to),
       },
     });
   }
