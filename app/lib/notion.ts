@@ -1,4 +1,6 @@
 import { Client, isFullPage } from "@notionhq/client";
+import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoints";
+import { format } from "date-fns";
 import { z } from "zod";
 import {
   calendarDateSchema,
@@ -7,10 +9,8 @@ import {
   mealIngredientRelationsSchema,
   mealSchema as recipeSchema,
 } from "./schema";
-import { format, isDate, parse } from "date-fns";
 import { catchError } from "./utils";
 import { nb } from "date-fns/locale";
-import { QueryDatabaseParameters } from "@notionhq/client/build/src/api-endpoints";
 
 export type CalendarDate = z.infer<typeof calendarDateSchema>;
 export type Relation = z.infer<typeof mealIngredientRelationsSchema>;
@@ -26,42 +26,38 @@ export type RecipeIngredientQuantity = {
   unitOfMeasure: string | null;
 };
 
-function isValidDate(dateStr: string) {
-  return !isNaN(new Date(dateStr).getTime());
-}
-
 // Initializing a client
 const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
 
-function formattedDate(dateString: string) {
-  return format(new Date(dateString), "yyyy-MM-dd", { locale: nb });
+function formatNotionDate(date: Date) {
+  return format(date, "yyyy-MM-dd", { locale: nb });
 }
 
-type CalendarFilter = {
-  from: string | null;
-  to: string | null;
+type Filter = {
+  from: Date | null;
+  to: Date | null;
 };
 
-export async function getCalendarTableData({ from, to }: CalendarFilter) {
+export async function getCalendarTableData({ from, to }: Filter) {
   const dateFilter: QueryDatabaseParameters["filter"] = {
     and: [],
   };
 
-  if (from && isValidDate(from)) {
+  if (from) {
     dateFilter.and.push({
       property: "Date",
       date: {
-        on_or_after: formattedDate(from),
+        on_or_after: formatNotionDate(from),
       },
     });
   }
-  if (to && isValidDate(to)) {
+  if (to) {
     dateFilter.and.push({
       property: "Date",
       date: {
-        on_or_before: formattedDate(to),
+        on_or_before: formatNotionDate(to),
       },
     });
   }

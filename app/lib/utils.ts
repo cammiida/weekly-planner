@@ -6,6 +6,12 @@ import {
   Relation,
 } from "./notion";
 import { Meal } from "./schema";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export function mergeData({
   dates,
