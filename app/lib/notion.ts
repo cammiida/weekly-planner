@@ -7,7 +7,7 @@ import {
   ingredientSchema,
   Meal,
   mealIngredientRelationsSchema,
-  mealSchema as recipeSchema,
+  recipeSchema,
 } from "./schema";
 import { catchError } from "./utils";
 import { nb } from "date-fns/locale";
@@ -112,7 +112,7 @@ export async function getCalendarRecipes(calendarDates: CalendarDate[]) {
     .map((date) => date.recipeId)
     .filter((it) => it != null);
 
-  return getMeals(recipeIds);
+  return getRecipes(recipeIds);
 }
 
 export async function getMealIngredientJunctionTable() {
@@ -130,12 +130,12 @@ export async function getMealIngredientJunctionTable() {
   return mealIngredientRelationsSchema.array().parse(res.results);
 }
 
-export async function getMeals(mealIds: string[]): Promise<Recipe[]> {
+export async function getRecipes(recipeIds: string[]): Promise<Recipe[]> {
   try {
     const res = await Promise.all(
-      mealIds.map((mealId) =>
+      recipeIds.map((recipeId) =>
         notion.pages.retrieve({
-          page_id: mealId,
+          page_id: recipeId,
         })
       )
     );

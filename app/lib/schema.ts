@@ -53,20 +53,20 @@ export const calendarDateSchema = z
     servings: date.properties.Servings?.number ?? 1,
   }));
 
-export const mealSchema = z
+export const recipeSchema = z
   .object({
     id: z.string(),
     properties: z.object({
-      Type: z.object({ select: z.object({ name: mealSelect }).nullable() }),
+      Type: z.object({ select: z.object({ name: mealSelect }).nullish() }),
       Name: z.object({
         title: z.array(z.object({ plain_text: z.string() })),
       }),
     }),
   })
-  .transform((meal) => ({
-    id: meal.id,
-    name: meal.properties.Name.title[0].plain_text,
-    type: toMeal(meal.properties.Type.select?.name),
+  .transform((recipe) => ({
+    id: recipe.id,
+    name: recipe.properties.Name.title[0].plain_text,
+    type: toMeal(recipe.properties.Type.select?.name),
   }));
 
 export const ingredientSchema = z
@@ -99,7 +99,7 @@ export const mealIngredientRelationsSchema = z
         id: z.string(),
         select: z.object({ name: z.string(), color: z.string() }).nullable(),
       }),
-      Meal: z.object({
+      Recipe: z.object({
         id: z.string(),
         type: z.literal("relation"),
         relation: z.array(z.object({ id: z.string() })),
@@ -115,6 +115,6 @@ export const mealIngredientRelationsSchema = z
     id: relation.id,
     quantity: relation.properties.Quantity.number,
     unitOfMeasure: relation.properties.Unit.select?.name ?? null,
-    recipeId: relation.properties.Meal.relation.at(0)?.id,
+    recipeId: relation.properties.Recipe.relation.at(0)?.id,
     ingredientId: relation.properties.Ingredient.relation.at(0)?.id,
   }));
